@@ -144,7 +144,7 @@
         const res = await fetch('https://gofoton-rag.onrender.com/ask', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: question })
+          body: JSON.stringify({ question })
         });
 
         if (!res.ok) throw new Error('Network response was not ok');
