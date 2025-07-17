@@ -17,7 +17,13 @@ app.add_middleware(
 # Load everything once at startup
 print("🔄 Loading vector store and QA chain...")
 docs = load_documents()
-vectorstore = create_vectorstore(docs)
+try:
+    vectorstore = create_vectorstore(docs)
+    qa_chain = create_qa_chain(vectorstore)
+    print("✅ RAG backend ready.")
+except Exception as e:
+    print(f"❌ Error initializing backend: {e}")
+
 qa_chain = create_qa_chain(vectorstore)
 print("✅ RAG backend ready.")
 
@@ -28,3 +34,7 @@ class Question(BaseModel):
 async def ask_question(payload: Question):
     answer = qa_chain.invoke({"query": payload.question})
     return {"answer": answer["result"]}
+
+@app.get("/")
+def health_check():
+    return {"status": "GoFoton RAG backend is live"}
