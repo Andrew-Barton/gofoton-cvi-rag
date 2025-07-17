@@ -1,0 +1,15 @@
+# Ignore Python envs
+.venv/
+__pycache__/
+
+# VS Code config
+.vscode/
+
+# Python cache
+*.pyc
+
+# Chroma vector store
+.chroma_store/
+
+# OpenAI env
+.env.env
