@@ -13,8 +13,11 @@ def chat_loop():
         query = input("🧠 Ask a question: ")
         if query.lower() in ["exit", "quit"]:
             break
-        answer = qa.invoke({"query": query})
-        print(f"🤖 Answer: {answer['result']}\n")
+        result = qa.invoke({"question": query})
+        print(f"🤖 Answer: {result['answer']}")
+        if result.get("sources"):
+            print(f"📚 Sources: {result['sources']}")
+
 
 if __name__ == "__main__":
     chat_loop()
