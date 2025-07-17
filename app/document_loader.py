@@ -1,21 +1,23 @@
 import os
-import fitz  # PyMuPDF
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from app.config import OPENAI_API_KEY
 from langchain.docstore.document import Document
+from pdfminer.high_level import extract_text
 
 def load_pdf(path):
-    doc = fitz.open(path)
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    return text
+    try:
+        text = extract_text(path)
+        return text
+    except Exception as e:
+        print(f"❌ Failed to extract text from {path}: {e}")
+        return ""
 
 def load_documents(directory="data/sample_docs"):
     docs = []
     for filename in os.listdir(directory):
+        print(f"📄 Loading: {filename}")
         if filename.endswith(".pdf"):
             full_path = os.path.join(directory, filename)
             raw_text = load_pdf(full_path)
