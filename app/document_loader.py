@@ -1,16 +1,29 @@
-from langchain_community.document_loaders import TextLoader
+import os
+import fitz  # PyMuPDF
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_openai.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from app.config import OPENAI_API_KEY
-import os
+from langchain.docstore.document import Document
+
+def load_pdf(path):
+    doc = fitz.open(path)
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
 
 def load_documents(directory="data/sample_docs"):
     docs = []
     for filename in os.listdir(directory):
-        if filename.endswith(".txt"):
-            loader = TextLoader(os.path.join(directory, filename))
-            docs.extend(loader.load())
+        if filename.endswith(".pdf"):
+            full_path = os.path.join(directory, filename)
+            raw_text = load_pdf(full_path)
+            docs.append(Document(page_content=raw_text))
+        elif filename.endswith(".txt"):
+            with open(os.path.join(directory, filename), "r") as f:
+                text = f.read()
+                docs.append(Document(page_content=text))
     return docs
 
 def create_vectorstore(docs):
