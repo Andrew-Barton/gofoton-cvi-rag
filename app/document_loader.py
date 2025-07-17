@@ -33,4 +33,10 @@ def create_vectorstore(docs):
     chunks = splitter.split_documents(docs)
     embeddings = OpenAIEmbeddings(api_key=OPENAI_API_KEY)
     vectorstore = Chroma.from_documents(chunks, embeddings, persist_directory=".chroma_store")
+
+    print(f"📦 Created {len(chunks)} document chunks.")
+    for i, chunk in enumerate(chunks[:5]):  # Preview first 5
+        print(f"\n--- Chunk {i+1} ---\n{chunk.page_content[:500]}")
+
+
     return vectorstore
