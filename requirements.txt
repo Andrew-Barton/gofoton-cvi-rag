@@ -6,3 +6,5 @@ openai
 chromadb
 python-dotenv
 tqdm
+fastapi
+uvicorn

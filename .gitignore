@@ -12,4 +12,4 @@ __pycache__/
 .chroma_store/
 
 # OpenAI env
-.env.env
+.env
