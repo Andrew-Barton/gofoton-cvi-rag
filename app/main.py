@@ -32,7 +32,7 @@ class Question(BaseModel):
 
 @app.post("/ask")
 async def ask_question(payload: Question):
-    answer = qa_chain.invoke({"query": payload.question})
+    answer = qa_chain.invoke({"question": payload.question})
     return {"answer": answer["result"]}
 
 @app.get("/")
