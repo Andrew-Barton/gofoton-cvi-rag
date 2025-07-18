@@ -58,6 +58,7 @@
       line-height: 1.4;
       word-wrap: break-word;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      white-space: pre-wrap;
     }
 
     .user {
@@ -148,9 +149,19 @@
         });
 
         if (!res.ok) throw new Error('Network response was not ok');
-
         const data = await res.json();
-        appendMessage(data.answer, 'bot');
+
+        // Convert markdown (basic: bold, bullets, newlines)
+        const formatted = data.answer
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // bold
+          .replace(/\n{2,}/g, '<br><br>')                    // double newline to paragraph
+          .replace(/\n/g, '<br>');                           // single newline to <br>
+
+        const msg = document.createElement('div');
+        msg.className = `bot message`;
+        msg.innerHTML = formatted;
+        chat.appendChild(msg);
+        chat.scrollTop = chat.scrollHeight;
       } catch (err) {
         appendMessage('⚠️ Error fetching response. Please try again later.', 'bot');
       }
