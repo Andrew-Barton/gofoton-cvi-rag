@@ -5,6 +5,35 @@ from langchain_openai import OpenAIEmbeddings
 from app.config import OPENAI_API_KEY
 from langchain.docstore.document import Document
 from pdfminer.high_level import extract_text
+from langchain_core.documents import Document
+from pathlib import Path
+from PIL import Image
+import pytesseract
+from pdf2image import convert_from_path
+import tempfile
+from typing import List
+from langchain_community.document_loaders import TextLoader
+
+
+def ocr_fallback_loader(pdf_path: str, min_length_threshold: int = 100) -> list[Document]:
+    """
+    Attempt to extract text from a PDF. If too little is returned, fallback to OCR.
+    """
+    print(f"📄 Attempting text extraction: {Path(pdf_path).name}")
+    extracted_text = extract_text(pdf_path)
+    
+    if extracted_text and len(extracted_text.strip()) >= min_length_threshold:
+        return [Document(page_content=extracted_text, metadata={"source": Path(pdf_path).name})]
+
+    print("⚠️ Text extraction failed or insufficient. Using OCR fallback...")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        images = convert_from_path(pdf_path, output_folder=tmpdir)
+        ocr_text = ""
+        for i, image in enumerate(images):
+            page_text = pytesseract.image_to_string(image)
+            ocr_text += f"\n\n--- Page {i+1} ---\n{page_text.strip()}"
+    
+    return [Document(page_content=ocr_text, metadata={"source": Path(pdf_path).name})]
 
 def load_pdf(path):
     try:
@@ -14,22 +43,36 @@ def load_pdf(path):
         print(f"❌ Failed to extract text from {path}: {e}")
         return ""
 
-def load_documents(directory="data/sample_docs"):
-    docs = []
+def load_documents(directory: str) -> List[Document]:
+    documents = []
     for filename in os.listdir(directory):
-        print(f"📄 Loading: {filename}")
-        full_path = os.path.join(directory, filename)
+        filepath = os.path.join(directory, filename)
 
-        if filename.endswith(".pdf"):
-            raw_text = load_pdf(full_path)
-        elif filename.endswith(".txt"):
-            with open(full_path, "r") as f:
-                raw_text = f.read()
-        else:
-            continue
+        if filename.endswith(".txt"):
+            print(f"📄 Loading: {filename}")
+            loader = TextLoader(filepath, encoding='utf-8')
+            documents.extend(loader.load())
 
-        docs.append(Document(page_content=raw_text, metadata={"source": filename}))
-    return docs
+        elif filename.endswith(".pdf"):
+            print(f"📄 Loading: {filename}")
+            try:
+                text = extract_text(filepath)
+                if not text.strip():
+                    raise ValueError("Empty PDF content — falling back to OCR")
+                documents.append(Document(page_content=text, metadata={"source": filename}))
+            except Exception as e:
+                print(f"⚠️ PDF extraction failed for {filename}, using OCR fallback: {e}")
+                documents.extend(ocr_fallback_loader(filepath, filename))
+
+        # Placeholder for future support
+        # elif filename.endswith(".docx"):
+        #     pass  # e.g., use python-docx
+        # elif filename.endswith(".rtf"):
+        #     pass  # rtf-parser
+        # elif filename.endswith((".jpg", ".jpeg", ".png")):
+        #     documents.extend(ocr_fallback_loader(filepath, filename))
+
+    return documents
 
 def create_vectorstore(docs):
     splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=150)
