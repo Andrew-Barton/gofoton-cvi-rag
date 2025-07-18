@@ -32,8 +32,11 @@ class Question(BaseModel):
 
 @app.post("/ask")
 async def ask_question(payload: Question):
-    answer = qa_chain.invoke({"question": payload.question})
-    return {"answer": answer["result"]}
+    response = qa_chain.invoke({"question": payload.question})
+    return {
+        "answer": response["answer"],
+        "sources": response.get("sources", ""),
+    }               
 
 @app.get("/")
 def health_check():
