@@ -43,15 +43,18 @@ def load_pdf(path):
         print(f"❌ Failed to extract text from {path}: {e}")
         return ""
 
-def load_documents(directory: str) -> List[Document]:
+def load_documents(directory: str = "data/sample_docs") -> List[Document]:
     documents = []
     for filename in os.listdir(directory):
         filepath = os.path.join(directory, filename)
 
         if filename.endswith(".txt"):
             print(f"📄 Loading: {filename}")
-            loader = TextLoader(filepath, encoding='utf-8')
-            documents.extend(loader.load())
+            loader = TextLoader(filepath, encoding="utf-8")
+            docs = loader.load()
+            for d in docs:
+                d.metadata["loader"] = "text"
+            documents.extend(docs)
 
         elif filename.endswith(".pdf"):
             print(f"📄 Loading: {filename}")
@@ -59,10 +62,16 @@ def load_documents(directory: str) -> List[Document]:
                 text = extract_text(filepath)
                 if not text.strip():
                     raise ValueError("Empty PDF content — falling back to OCR")
-                documents.append(Document(page_content=text, metadata={"source": filename}))
+                documents.append(Document(
+                    page_content=text,
+                    metadata={"source": filename, "loader": "pdf-native"}
+                ))
             except Exception as e:
                 print(f"⚠️ PDF extraction failed for {filename}, using OCR fallback: {e}")
-                documents.extend(ocr_fallback_loader(filepath, filename))
+                ocr_docs = ocr_fallback_loader(filepath, filename)
+                for d in ocr_docs:
+                    d.metadata["loader"] = "pdf-ocr"
+                documents.extend(ocr_docs)
 
         # Placeholder for future support
         # elif filename.endswith(".docx"):

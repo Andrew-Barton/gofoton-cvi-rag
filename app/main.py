@@ -1,10 +1,17 @@
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.document_loader import load_documents, create_vectorstore
 from app.rag_chain import create_qa_chain
 
 app = FastAPI()
+
+from app.uploader import router as uploader_router
+app.include_router(uploader_router)
+
+# Mount static files
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
 
 # Allow CORS (so frontend can talk to backend)
 app.add_middleware(

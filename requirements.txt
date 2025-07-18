@@ -9,4 +9,7 @@ tqdm
 fastapi
 uvicorn
 pdfminer.six
+pytesseract
+pdf2image
 Pillow
+python-multipart
